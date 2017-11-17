@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test for UPnP</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/testClient.js" defer></script>
+    <style>
+        label.tab {
+            border: solid black 1px;
+            padding: 2px;
+            margin: 0px;
+        }
+        label.tab.selected {
+            background: lightgreen;
+        }
+        .hidden {
+            display: none;
+        }
+        section.device {
+            border: solid black 2px;
+            margin: 3px;
+        }
+
+        section.service {
+            border: solid black 1px;
+        }
+
+        section.action {
+
+        }
+    </style>
+</head>
+<body>
+    <h1>Test for UPnP</h1>
+    <section class="tabs"></section>
+    <section class="devices"></section>
+</body>
+</html>

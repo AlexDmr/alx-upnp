@@ -1,0 +1,40 @@
+{
+  "name": "alx-upnp",
+  "version": "1.0.0",
+  "description": "UPnP client",
+  "main": "build/main.js",
+  "types": "build/main.d.ts",
+  "scripts": {
+    "test": "node ./build/test.js",
+    "compile": "tsc --watch",
+    "start": "node ./build/main.js"
+  },
+  "keywords": [
+    "UPnP",
+    "Typescript"
+  ],
+  "author": "AlexDmr",
+  "license": "ISC",
+  "dependencies": {
+    "@reactivex/rxjs": "^5.5.2",
+    "dgram": "^1.0.1",
+    "fs-extra": "^4.0.2",
+    "os": "^0.1.1",
+    "request-promise-native": "^1.0.5",
+    "soap": "^0.23.0",
+    "xmldom": "^0.1.27"
+  },
+  "devDependencies": {
+    "@types/express": "^4.0.39",
+    "@types/fs-extra": "^4.0.4",
+    "@types/node": "^8.0.51",
+    "@types/request": "^2.0.7",
+    "@types/request-promise-native": "^1.0.10",
+    "@types/soap": "^0.18.0",
+    "@types/socket.io": "^1.4.31",
+    "@types/xmldom": "^0.1.29",
+    "express": "^4.16.2",
+    "path": "^0.12.7",
+    "socket.io": "^2.0.4"
+  }
+}
