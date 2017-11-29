@@ -4,6 +4,7 @@ import {getNetInterfacesIPv4} from "./netInterfaces";
 import {createDevice, Device, getDevices, obsDeviceAppears, obsDeviceDisppears, removeDevice, updateDevice} from "./Device";
 import {NetworkInterfaceInfo} from "os";
 import {Observer, Subscription} from "@reactivex/rxjs";
+import { Observable } from '@reactivex/rxjs/dist/package';
 
 const RE_CacheControl = /= *([0-9]*)$/;
 
@@ -23,6 +24,14 @@ export class ControlPoint {
             console.log('UDP4 server addMembership ' + BROADCAST_ADDR);
             this.search();
         });
+    }
+
+    getObsDeviceAppears(): Observable<Device> {
+        return obsDeviceAppears;
+    }
+
+    getObsDeviceDisappears(): Observable<Device> {
+        return obsDeviceDisppears;
     }
 
     subscribeToDeviceAppear(obs: Observer<Device>): Subscription {

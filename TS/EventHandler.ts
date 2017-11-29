@@ -4,6 +4,7 @@ import {NetworkInterfaceInfo} from "os";
 import {ReSubscribeToService, UnSubscribeFromService, UPNP_SUBSCRIBE} from "./ServiceSubscription";
 import {Observable, Subject} from "@reactivex/rxjs/dist/package";
 
+import {logError, log} from "./logFunction";
 
 // HTTP Server for receiving events
 const server = http.createServer((req, res) => {
@@ -106,15 +107,15 @@ function serviceCallbackHandler(req: http.IncomingMessage, res: http.ServerRespo
             // acknowledge the event notification
             res.writeHead	( 200 );
             res.end("");
-            // console.log("Received event\n", req.headers, "\n", reqContent);
+            // log("Received event\n", req.headers, "\n", reqContent);
             const sid = req.headers.sid as string;
             const subscription: Subscription = mapSubscription.get(sid);
             if (subscription) {
                 subscription.responseCount++;
-                // console.log( "\tsubscription.handleEvent", subscription.handleEvent);
+                // log( "\tsubscription.handleEvent", subscription.handleEvent);
                 subscription.eventSubject.next( reqContent );
             } else {
-                console.log("PRECOCE EVENT FOR", sid);
+                log("PRECOCE EVENT FOR", sid);
                 const missed = mapMissedEvent.has(sid) ? mapMissedEvent.get(sid) : [];
                 missed.push(reqContent);
                 mapMissedEvent.set(sid, missed);
@@ -124,7 +125,7 @@ function serviceCallbackHandler(req: http.IncomingMessage, res: http.ServerRespo
                 // ignore
             }
             else {
-                console.error("exception: ", ex);
+                logError("exception: ", ex);
             }
         }
     });

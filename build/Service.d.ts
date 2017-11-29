@@ -1,7 +1,5 @@
-import { SubscriptionEvent } from "./EventHandler";
+import { CALL_RESULT } from "./ServiceAction";
 import { Observable } from "@reactivex/rxjs/dist/package/Observable";
-import { Subscription } from "@reactivex/rxjs/dist/package/Subscription";
-import { BehaviorSubject, Observer } from "@reactivex/rxjs/dist/package";
 export declare type CALL = {
     actionName: string;
     args: Object;
@@ -16,8 +14,13 @@ export declare class StateVariable {
         sendEvents: boolean;
         name: string;
         dataType: string;
+        value: string;
     };
-    subscribe(obs: Observer<any>): Subscription;
+    updateValue(value: string): void;
+    getName(): string;
+    getDataType(): string;
+    isSendingUPnPEvents(): boolean;
+    getObservable(): Observable<string>;
 }
 export declare type ServiceConfig = {
     baseURL: string;
@@ -33,14 +36,13 @@ export declare class Service {
     eventSubURL: string;
     raw: string;
     promiseDetails: Promise<this>;
-    stateVariables: StateVariable[];
+    stateVariables: Map<string, StateVariable>;
     private actions;
     private baseURL;
     private host;
     private port;
     private sid;
-    eventsObs: Observable<SubscriptionEvent>;
-    properties: BehaviorSubject<Object>;
+    private eventsObs;
     constructor({baseURL, serviceXML, host, port}: ServiceConfig);
     dispose(): void;
     toJSON(): {
@@ -53,6 +55,7 @@ export declare class Service {
             sendEvents: boolean;
             name: string;
             dataType: string;
+            value: string;
         }[];
         actions: {
             name: string;
@@ -69,11 +72,12 @@ export declare class Service {
         baseURL: string;
         host: string;
         port: string;
-        properties: Object;
     };
-    call(C: CALL): Promise<any>;
+    call(C: CALL): Promise<CALL_RESULT>;
+    getId(): string;
+    getType(): string;
     getDescription(): Promise<this>;
-    getPropertiesObs(): Observable<Object>;
+    updateProperty(propName: string, value: string): void;
     private subscribeToEvents();
     private getCompleteAdress(ad);
     private getServiceDetails();

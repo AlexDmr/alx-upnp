@@ -5,7 +5,7 @@ const TLS_SSL_1 = require("./TLS_SSL");
 const xmldom = require("xmldom");
 const Service_1 = require("./Service");
 const Subject_1 = require("@reactivex/rxjs/dist/package/Subject");
-const Observable_1 = require("@reactivex/rxjs/dist/package/Observable");
+const logFunction_1 = require("./logFunction");
 const parserXML = new xmldom.DOMParser();
 const mapDevices = new Map();
 const subjectDeviceAppears = new Subject_1.Subject();
@@ -13,11 +13,12 @@ const subjectDeviceDisappears = new Subject_1.Subject();
 exports.obsDeviceAppears = subjectDeviceAppears.asObservable();
 exports.obsDeviceDisppears = subjectDeviceDisappears.asObservable();
 class Device {
+    // private L_EventObservers: CB_SERVICE_EVENT[] = [];
+    // private obsEvents: Observable<SERVICE_EVENT>;
     constructor(msg) {
         this.iconList = [];
         this.services = [];
-        this.L_EventObservers = [];
-        // console.log("createDevice", msg);
+        logFunction_1.log("createDevice", msg);
         this.headers = msg.headers;
         this.USN = msg.headers.USN;
         this.updateRemoveDelay(msg.headers.CacheControl);
@@ -26,7 +27,7 @@ class Device {
         this.baseURL = A[0] + "//" + A[2];
         [this.host, this.port] = A[2].split(":");
         this.port = this.port || "80";
-        console.log("baseURL", this.baseURL, "=>", this.host, ":", this.port);
+        logFunction_1.log("baseURL", this.baseURL, "=>", this.host, ":", this.port);
         this.promiseDetails = this.getDeviceDetails();
     }
     dispose() {
@@ -36,17 +37,25 @@ class Device {
         }
         this.services.forEach(S => S.dispose());
     }
+    findServiceFromType(type) {
+        return this.services.find(S => S.serviceType.indexOf(type) >= 0);
+    }
+    getServices() {
+        return this.services;
+    }
+    getType() {
+        return this.deviceType;
+    }
     getUSN() {
         return this.USN;
     }
-    subscribeToServices(obs) {
+    /* subscribeToServices( obs: CB_SERVICE_EVENT ) {
         if (this.obsEvents) {
-            this.obsEvents.subscribe(obs);
-        }
-        else {
+            this.obsEvents.subscribe( obs );
+        } else {
             this.L_EventObservers.push(obs);
         }
-    }
+    } */
     toJSON() {
         return {
             USN: this.USN,
@@ -68,7 +77,7 @@ class Device {
         };
     }
     updateRemoveDelay(nbSeconds) {
-        // console.log("updateRemoveDelay", nbSeconds);
+        logFunction_1.log("updateRemoveDelay", nbSeconds);
         if (this.removeDelay) {
             clearTimeout(this.removeDelay);
         }
@@ -133,25 +142,28 @@ class Device {
                 })).then(services => {
                     this.services = services;
                     // Subscribe...
-                    this.obsEvents = Observable_1.Observable.merge(// Merge observable<SERVICE_EVENT> into one source
-                    ...this.services.map(// map services to an array of {serviceId, observableProperties}
-                    S => ({ serviceId: S.serviceId, obs: S.getPropertiesObs() })).map(// map to an array of observable<SERVICE_EVENT>
-                    ({ serviceId, obs }) => obs.map(evtObj => ({ serviceId, properties: evtObj }))));
-                    this.L_EventObservers.forEach(obs => this.obsEvents.subscribe(obs));
+                    /* this.obsEvents = Observable.merge( // Merge observable<SERVICE_EVENT> into one source
+                        ...this.services.map( // map services to an array of {serviceId, observableProperties}
+                            S => ({serviceId: S.serviceId, variables: S.stateVariables})
+                        ).map( // map to an array of observable<SERVICE_EVENT>
+                            ({serviceId, variables}) => obs.map(evtObj => ({serviceId, properties: evtObj}) )
+                        )
+                    );
+                    this.L_EventObservers.forEach( obs => this.obsEvents.subscribe(obs) );
                     this.L_EventObservers = [];
-                    return this;
+                    return this;*/
                 }, err => {
-                    console.error("Error getting all services descriptions", err);
+                    logFunction_1.logError("Error getting all services descriptions", err);
                 });
             }
             else {
                 throw "Device document cannot be parsed or is empty";
             }
         }, err => {
-            console.error("Error getting details from", location, "\n", err.message);
+            logFunction_1.logError("Error getting details from", location, "\n", err.message);
             return err;
         }).catch(err => {
-            console.error("Error getting details from", location, "\n", err.message);
+            logFunction_1.logError("Error getting details from", location, "\n", err.message);
             return err;
         });
     }
@@ -168,9 +180,9 @@ function createDevice(msg) {
             const device = new Device(msg);
             device.getDescription().then(() => {
                 subjectDeviceAppears.next(device);
-                console.log("New device, with complete description", device.getUSN());
+                logFunction_1.log("New device, with complete description", device.getUSN());
             }, err => {
-                console.error("Error getting device description of", device.getUSN());
+                logFunction_1.logError("Error getting device description of", device.getUSN());
             });
         }
     }
@@ -184,12 +196,12 @@ function removeDevice(msg) {
 exports.removeDevice = removeDevice;
 function removeDeviceWithRef(device) {
     if (device && device.getUSN() && mapDevices.has(device.getUSN())) {
-        console.log("removeDeviceWithRef", device);
+        logFunction_1.log("removeDeviceWithRef", device);
         device.dispose();
     }
 }
 function updateDevice(msg) {
-    console.log("updateDevice", msg);
+    logFunction_1.log("updateDevice", msg);
     createDevice(msg);
 }
 exports.updateDevice = updateDevice;

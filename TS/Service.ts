@@ -1,7 +1,7 @@
 import {get} from "request-promise-native";
 import {TLS_SSL} from "./TLS_SSL";
 import * as xmldom from "xmldom";
-import {Action} from "./ServiceAction";
+import {Action, CALL_RESULT} from "./ServiceAction";
 import {SubscribeToEvent, SubscriptionEvent, UnSubscribeFromEvent} from "./EventHandler";
 import {getRelativeAdress, SubscribeToService, UPNP_SUBSCRIBE} from "./ServiceSubscription";
 
@@ -9,6 +9,8 @@ import {Observable} from "@reactivex/rxjs/dist/package/Observable";
 import {Subject} from "@reactivex/rxjs/dist/package/Subject";
 import {Subscription} from "@reactivex/rxjs/dist/package/Subscription";
 import {BehaviorSubject, Observer} from "@reactivex/rxjs/dist/package";
+
+import {logError, log} from "./logFunction";
 
 const parserXML = new xmldom.DOMParser();
 
@@ -18,7 +20,7 @@ export type CALL = {
 }
 
 export class StateVariable {
-    private subject = new Subject<any>();
+    private subject = new BehaviorSubject<string>("");
     private sendEvents: boolean;
     private name: string;
     private dataType: string;
@@ -27,20 +29,37 @@ export class StateVariable {
         this.name       = SV_XML.getElementsByTagName("name"    )[0].textContent;
         this.dataType   = SV_XML.getElementsByTagName("dataType")[0].textContent;
         this.sendEvents = SV_XML.getAttribute("sendEvents").toLowerCase()==="yes";
-        // console.log("\tvariable", this.name);
     }
 
     toJSON() {
         return {
             sendEvents: this.sendEvents,
             name: this.name,
-            dataType: this.dataType
+            dataType: this.dataType,
+            value: this.subject.getValue()
         };
     }
 
-    subscribe(obs: Observer<any>): Subscription {
-        return this.subject.subscribe(obs);
+    updateValue(value: string) {
+        this.subject.next(value);
     }
+
+    getName(): string {
+        return this.name;
+    }
+
+    getDataType(): string {
+        return this.dataType;
+    }
+
+    isSendingUPnPEvents(): boolean {
+        return this.sendEvents;
+    }
+
+    getObservable(): Observable<string> {
+        return this.subject.asObservable();
+    }
+
 }
 
 export type ServiceConfig = {
@@ -58,14 +77,14 @@ export class Service {
     eventSubURL: string;
     raw: string;
     promiseDetails: Promise<this>;
-    stateVariables: StateVariable[];
+    stateVariables = new Map<string, StateVariable>();
     private actions: Action[];
     private baseURL: string;
     private host: string;
     private port: string;
     private sid: string;
-    eventsObs: Observable<SubscriptionEvent>;
-    properties = new BehaviorSubject<Object>({});
+    private eventsObs: Observable<SubscriptionEvent>;
+    // properties = new BehaviorSubject<Object>({});
 
     constructor( {baseURL, serviceXML, host, port}: ServiceConfig) {
         this.baseURL = baseURL;
@@ -101,26 +120,39 @@ export class Service {
             SCPDURL: this.SCPDURL,
             controlURL: this.controlURL,
             eventSubURL: this.eventSubURL,
-            stateVariables: this.stateVariables.map( S => S.toJSON() ),
+            stateVariables: Array.from( this.stateVariables.values() ).map( S => S.toJSON() ),
             actions: this.actions.map( A => A.toJSON() ),
             baseURL: this.baseURL,
             host: this.host,
             port: this.port,
-            properties: this.properties.getValue()
+            // properties: this.properties.getValue()
         };
     }
 
-    call(C: CALL): Promise<any> {
+    call(C: CALL): Promise<CALL_RESULT> {
         const action = this.actions.find(A => A.getName() === C.actionName);
         return action.call(C.args);
+    }
+
+    getId(): string {
+        return this.serviceId;
+    }
+
+    getType(): string {
+        return this.serviceType;
     }
 
     getDescription(): Promise<this> {
         return this.promiseDetails;
     }
 
-    getPropertiesObs(): Observable<Object> {
+    /* getPropertiesObs(): Observable<Object> {
         return this.properties.asObservable();
+    }*/
+
+    updateProperty(propName: string, value: string) {
+        const SV = this.stateVariables.get(propName);
+        SV.updateValue( value );
     }
 
     private async subscribeToEvents() {
@@ -130,24 +162,28 @@ export class Service {
             this.sid = sid;
             this.eventsObs = SubscribeToEvent(sid, timeout, upnpSubscr);
             this.eventsObs.subscribe(str => {
-                console.log("EVENT", str);
+                log("EVENT", str);
                 const doc = parserXML.parseFromString(str, "text/xml");
                 let properties: Element[] = Array.from( doc.getElementsByTagName("property") );
                 if(properties.length === 0) {
                     properties = Array.from( doc.getElementsByTagName("e:property") );
                 }
-                const objProperties = {};
+                // const objProperties = {};
                 properties.forEach( P => {
                     const tag = P.getElementsByTagName("*")[0];
                     const propName = tag.nodeName.split(":").reverse()[0]
-                    objProperties[propName] = tag.textContent;
+                    // objProperties[propName] = tag.textContent;
+                    const SV = this.stateVariables.get(propName);
+                    if (SV) {
+                        SV.updateValue( tag.textContent ); // objProperties[propName] );
+                    }
                 });
-                console.log("EVENT", objProperties);
+                /* log("EVENT", objProperties);
                 const newProperties = Object.assign({}, this.properties.getValue(), objProperties);
-                this.properties.next( newProperties );
+                this.properties.next( newProperties ); */
             } );
         } catch(err) {
-            console.error(err);
+            logError(err);
         }
     }
 
@@ -178,7 +214,9 @@ export class Service {
                 let node: Element;
                 // Get state variables
                 const stateVariablesXML = Array.from( doc.getElementsByTagName("stateVariable") );
-                this.stateVariables = stateVariablesXML.map( SV_XML => new StateVariable(SV_XML) );
+                stateVariablesXML.map( SV_XML => new StateVariable(SV_XML) ).forEach( SV => {
+                    this.stateVariables.set(SV.getName(), SV);
+                });
 
                 // Get actions
                 this.actions = Array.from(
@@ -205,3 +243,5 @@ export class Service {
             return err;
         });    }
 }
+
+

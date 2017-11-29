@@ -12,6 +12,7 @@ const http = require("http");
 const netInterfaces_1 = require("./netInterfaces");
 const ServiceSubscription_1 = require("./ServiceSubscription");
 const package_1 = require("@reactivex/rxjs/dist/package");
+const logFunction_1 = require("./logFunction");
 // HTTP Server for receiving events
 const server = http.createServer((req, res) => {
     serviceCallbackHandler(req, res);
@@ -96,16 +97,16 @@ function serviceCallbackHandler(req, res) {
             // acknowledge the event notification
             res.writeHead(200);
             res.end("");
-            // console.log("Received event\n", req.headers, "\n", reqContent);
+            // log("Received event\n", req.headers, "\n", reqContent);
             const sid = req.headers.sid;
             const subscription = mapSubscription.get(sid);
             if (subscription) {
                 subscription.responseCount++;
-                // console.log( "\tsubscription.handleEvent", subscription.handleEvent);
+                // log( "\tsubscription.handleEvent", subscription.handleEvent);
                 subscription.eventSubject.next(reqContent);
             }
             else {
-                console.log("PRECOCE EVENT FOR", sid);
+                logFunction_1.log("PRECOCE EVENT FOR", sid);
                 const missed = mapMissedEvent.has(sid) ? mapMissedEvent.get(sid) : [];
                 missed.push(reqContent);
                 mapMissedEvent.set(sid, missed);
@@ -116,7 +117,7 @@ function serviceCallbackHandler(req, res) {
                 // ignore
             }
             else {
-                console.error("exception: ", ex);
+                logFunction_1.logError("exception: ", ex);
             }
         }
     });

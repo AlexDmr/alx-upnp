@@ -14,32 +14,45 @@ const xmldom = require("xmldom");
 const ServiceAction_1 = require("./ServiceAction");
 const EventHandler_1 = require("./EventHandler");
 const ServiceSubscription_1 = require("./ServiceSubscription");
-const Subject_1 = require("@reactivex/rxjs/dist/package/Subject");
 const package_1 = require("@reactivex/rxjs/dist/package");
+const logFunction_1 = require("./logFunction");
 const parserXML = new xmldom.DOMParser();
 class StateVariable {
     constructor(SV_XML) {
-        this.subject = new Subject_1.Subject();
+        this.subject = new package_1.BehaviorSubject("");
         this.name = SV_XML.getElementsByTagName("name")[0].textContent;
         this.dataType = SV_XML.getElementsByTagName("dataType")[0].textContent;
         this.sendEvents = SV_XML.getAttribute("sendEvents").toLowerCase() === "yes";
-        // console.log("\tvariable", this.name);
     }
     toJSON() {
         return {
             sendEvents: this.sendEvents,
             name: this.name,
-            dataType: this.dataType
+            dataType: this.dataType,
+            value: this.subject.getValue()
         };
     }
-    subscribe(obs) {
-        return this.subject.subscribe(obs);
+    updateValue(value) {
+        this.subject.next(value);
+    }
+    getName() {
+        return this.name;
+    }
+    getDataType() {
+        return this.dataType;
+    }
+    isSendingUPnPEvents() {
+        return this.sendEvents;
+    }
+    getObservable() {
+        return this.subject.asObservable();
     }
 }
 exports.StateVariable = StateVariable;
 class Service {
+    // properties = new BehaviorSubject<Object>({});
     constructor({ baseURL, serviceXML, host, port }) {
-        this.properties = new package_1.BehaviorSubject({});
+        this.stateVariables = new Map();
         this.baseURL = baseURL;
         this.host = host;
         this.port = port;
@@ -65,23 +78,32 @@ class Service {
             SCPDURL: this.SCPDURL,
             controlURL: this.controlURL,
             eventSubURL: this.eventSubURL,
-            stateVariables: this.stateVariables.map(S => S.toJSON()),
+            stateVariables: Array.from(this.stateVariables.values()).map(S => S.toJSON()),
             actions: this.actions.map(A => A.toJSON()),
             baseURL: this.baseURL,
             host: this.host,
             port: this.port,
-            properties: this.properties.getValue()
         };
     }
     call(C) {
         const action = this.actions.find(A => A.getName() === C.actionName);
         return action.call(C.args);
     }
+    getId() {
+        return this.serviceId;
+    }
+    getType() {
+        return this.serviceType;
+    }
     getDescription() {
         return this.promiseDetails;
     }
-    getPropertiesObs() {
+    /* getPropertiesObs(): Observable<Object> {
         return this.properties.asObservable();
+    }*/
+    updateProperty(propName, value) {
+        const SV = this.stateVariables.get(propName);
+        SV.updateValue(value);
     }
     subscribeToEvents() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -91,25 +113,29 @@ class Service {
                 this.sid = sid;
                 this.eventsObs = EventHandler_1.SubscribeToEvent(sid, timeout, upnpSubscr);
                 this.eventsObs.subscribe(str => {
-                    console.log("EVENT", str);
+                    logFunction_1.log("EVENT", str);
                     const doc = parserXML.parseFromString(str, "text/xml");
                     let properties = Array.from(doc.getElementsByTagName("property"));
                     if (properties.length === 0) {
                         properties = Array.from(doc.getElementsByTagName("e:property"));
                     }
-                    const objProperties = {};
+                    // const objProperties = {};
                     properties.forEach(P => {
                         const tag = P.getElementsByTagName("*")[0];
                         const propName = tag.nodeName.split(":").reverse()[0];
-                        objProperties[propName] = tag.textContent;
+                        // objProperties[propName] = tag.textContent;
+                        const SV = this.stateVariables.get(propName);
+                        if (SV) {
+                            SV.updateValue(tag.textContent); // objProperties[propName] );
+                        }
                     });
-                    console.log("EVENT", objProperties);
+                    /* log("EVENT", objProperties);
                     const newProperties = Object.assign({}, this.properties.getValue(), objProperties);
-                    this.properties.next(newProperties);
+                    this.properties.next( newProperties ); */
                 });
             }
             catch (err) {
-                console.error(err);
+                logFunction_1.logError(err);
             }
         });
     }
@@ -140,7 +166,9 @@ class Service {
                 let node;
                 // Get state variables
                 const stateVariablesXML = Array.from(doc.getElementsByTagName("stateVariable"));
-                this.stateVariables = stateVariablesXML.map(SV_XML => new StateVariable(SV_XML));
+                stateVariablesXML.map(SV_XML => new StateVariable(SV_XML)).forEach(SV => {
+                    this.stateVariables.set(SV.getName(), SV);
+                });
                 // Get actions
                 this.actions = Array.from(doc.getElementsByTagName("action")).map(actionXML => new ServiceAction_1.Action({
                     actionXML,

@@ -3,6 +3,9 @@ import {RequestResponse} from "request";
 import {request, IncomingMessage, RequestOptions} from "http";
 import * as xmldom from "xmldom";
 
+import {logError, log} from "./logFunction";
+
+
 const parserXML = new xmldom.DOMParser();
 const reURL = /^(https?):\/\/([\w|\.|\d]*)\:?(\d+)\/(.*)$/i;
 
@@ -51,7 +54,7 @@ export function SubscribeToService( {host, port, path}: UPNP_SUBSCRIBE ): Promis
             res.on('data', (chunk) => buf += chunk);
             res.on('end', () => {
                 if (res.statusCode !== 200) {
-                    // console.error("Rejected SOAP action", buf);
+                    logError("Rejected SOAP action", buf);
                     reject(`Invalid SUBSCRIBE code: ${res.statusCode}\n${buf}`);
                 }
                 else {
@@ -59,7 +62,7 @@ export function SubscribeToService( {host, port, path}: UPNP_SUBSCRIBE ): Promis
                     const timeoutStr: string = res.headers.timeout as string;
                     const timeout: number = parseInt( timeoutStr.slice( timeoutStr.indexOf('-') + 1 ) );
 
-                    console.log(`SUBSCRIBE SUCCESS:\n\t-sid: ${sid}\n\t-timeout: ${timeout}\n\t-buf: ${buf}`);
+                    log(`SUBSCRIBE SUCCESS:\n\t-sid: ${sid}\n\t-timeout: ${timeout}\n\t-buf: ${buf}`);
                     resolve({sid, timeout});
                 }
             });
@@ -94,14 +97,19 @@ export async function ReSubscribeToService(sid: string, {host, port, path}: UPNP
             res.on('end', () => {
                 if (res.statusCode < 200 || res.statusCode >= 300) {
                     const msg = `---------> problem code ${res.statusCode} with _resubscribe:\n\t-buf: ${buf}`;
-                    console.error(msg);
-                    reject( {code: res.statusCode, msg: msg} );
+                    logError(msg);
+                    if (res.statusCode === 412) {
+                        log("Try to subscribe again...");
+                        return SubscribeToService( {host, port, path} );
+                    } else {
+                        reject( {code: res.statusCode, msg: msg} );                        
+                    }
                 }
                 else {
                     const sid2 = res.headers.sid as string;
                     const timeoutStr: string = res.headers.timeout as string;
                     const timeout2: number = parseInt( timeoutStr.slice( timeoutStr.indexOf('-') + 1 ) );
-                    console.log(`re-subscription success ${res.statusCode} :\n\t-sid: ${sid}\n\t-sid2: ${sid2}\n\ttimeout2: ${timeout2}`);
+                    log(`re-subscription success ${res.statusCode} :\n\t-sid: ${sid}\n\t-sid2: ${sid2}\n\ttimeout2: ${timeout2}`);
                     resolve( {sid, timeout: timeout2} );
                 }
             });

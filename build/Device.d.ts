@@ -1,5 +1,7 @@
 import { SSDP_HEADER, SSDP_MESSAGE } from "./SSDP";
+import { Service } from "./Service";
 import { Observable } from "@reactivex/rxjs/dist/package/Observable";
+import { CALL_RESULT } from "./ServiceAction";
 export declare const obsDeviceAppears: Observable<Device>;
 export declare const obsDeviceDisppears: Observable<Device>;
 export declare type CALL = {
@@ -38,12 +40,12 @@ export declare class Device {
     private baseURL;
     private host;
     private port;
-    private L_EventObservers;
-    private obsEvents;
     constructor(msg: SSDP_MESSAGE);
     dispose(): void;
+    findServiceFromType(type: string): Service;
+    getServices(): Service[];
+    getType(): string;
     getUSN(): string;
-    subscribeToServices(obs: CB_SERVICE_EVENT): void;
     toJSON(): {
         USN: string;
         headers: SSDP_HEADER;
@@ -67,6 +69,7 @@ export declare class Device {
                 sendEvents: boolean;
                 name: string;
                 dataType: string;
+                value: string;
             }[];
             actions: {
                 name: string;
@@ -83,14 +86,13 @@ export declare class Device {
             baseURL: string;
             host: string;
             port: string;
-            properties: Object;
         }[];
         baseURL: string;
         host: string;
         port: string;
     };
     updateRemoveDelay(nbSeconds: number): void;
-    call(C: CALL): Promise<any>;
+    call(C: CALL): Promise<CALL_RESULT>;
     getDescription(): Promise<this>;
     private getDeviceDetails();
 }

@@ -16,8 +16,8 @@ sio.on("disconnect", () => {
     console.log("socket.io disconnect");
 });
 
-sio.on("properties", descr => {
-    console.log("properties", descr);
+sio.on("property", descr => {
+    console.log("property", descr);
 });
 
 sio.on("UPNP::devices", devices => {

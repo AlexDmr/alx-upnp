@@ -19,6 +19,12 @@ class ControlPoint {
             this.search();
         });
     }
+    getObsDeviceAppears() {
+        return Device_1.obsDeviceAppears;
+    }
+    getObsDeviceDisappears() {
+        return Device_1.obsDeviceDisppears;
+    }
     subscribeToDeviceAppear(obs) {
         return Device_1.obsDeviceAppears.subscribe(obs);
     }
