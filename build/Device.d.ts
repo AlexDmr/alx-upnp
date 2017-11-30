@@ -1,5 +1,5 @@
 import { SSDP_HEADER, SSDP_MESSAGE } from "./SSDP";
-import { Service } from "./Service";
+import { Service, ServiceJSON } from "./Service";
 import { Observable } from "@reactivex/rxjs/dist/package/Observable";
 import { CALL_RESULT } from "./ServiceAction";
 export declare const obsDeviceAppears: Observable<Device>;
@@ -13,6 +13,7 @@ export declare type ICON = {
     mimetype: string;
     width: number;
     height: number;
+    depth: number;
     url: string;
 };
 export declare type SERVICE_EVENT = {
@@ -20,6 +21,24 @@ export declare type SERVICE_EVENT = {
     properties: Object;
 };
 export declare type CB_SERVICE_EVENT = (evt: SERVICE_EVENT) => void;
+export declare type DeviceJSON = {
+    USN: string;
+    headers: SSDP_HEADER;
+    iconList: ICON[];
+    deviceType: string;
+    friendlyName: string;
+    manufacturer: string;
+    manufacturerURL: string;
+    modelDescription: string;
+    modelName: string;
+    modelURL: string;
+    modelNumber: string;
+    serialNumber: string;
+    services: ServiceJSON[];
+    baseURL: string;
+    host: string;
+    port: string;
+};
 export declare class Device {
     private removeDelay;
     private USN;
@@ -46,51 +65,7 @@ export declare class Device {
     getServices(): Service[];
     getType(): string;
     getUSN(): string;
-    toJSON(): {
-        USN: string;
-        headers: SSDP_HEADER;
-        iconList: ICON[];
-        deviceType: string;
-        friendlyName: string;
-        manufacturer: string;
-        manufacturerURL: string;
-        modelDescription: string;
-        modelName: string;
-        modelURL: string;
-        modelNumber: string;
-        serialNumber: string;
-        services: {
-            serviceType: string;
-            serviceId: string;
-            SCPDURL: string;
-            controlURL: string;
-            eventSubURL: string;
-            stateVariables: {
-                sendEvents: boolean;
-                name: string;
-                dataType: string;
-                value: string;
-            }[];
-            actions: {
-                name: string;
-                serviceType: string;
-                controlURL: string;
-                args: {
-                    name: string;
-                    direction: "in" | "out";
-                    relatedStateVariable: string;
-                }[];
-                host: string;
-                port: string;
-            }[];
-            baseURL: string;
-            host: string;
-            port: string;
-        }[];
-        baseURL: string;
-        host: string;
-        port: string;
-    };
+    toJSON(): DeviceJSON;
     updateRemoveDelay(nbSeconds: number): void;
     call(C: CALL): Promise<CALL_RESULT>;
     getDescription(): Promise<this>;

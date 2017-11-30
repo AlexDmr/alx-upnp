@@ -2,7 +2,7 @@ import {SSDP_HEADER, SSDP_MESSAGE} from "./SSDP";
 import {get} from "request-promise-native";
 import {TLS_SSL} from "./TLS_SSL";
 import * as xmldom from "xmldom";
-import {Service} from "./Service";
+import {Service, ServiceJSON} from "./Service";
 import {Subject} from "@reactivex/rxjs/dist/package/Subject";
 import {Observable} from "@reactivex/rxjs/dist/package/Observable";
 import {Observer} from "@reactivex/rxjs/dist/package/Observer";
@@ -29,6 +29,7 @@ export type ICON = {
     mimetype: string;
     width: number;
     height: number;
+    depth: number;
     url: string;
 }
 
@@ -38,6 +39,25 @@ export type SERVICE_EVENT = {
 }
 
 export type CB_SERVICE_EVENT = (evt: SERVICE_EVENT) => void;
+
+export type DeviceJSON = {
+    USN: string;
+    headers: SSDP_HEADER; 
+    iconList: ICON[];
+    deviceType: string;
+    friendlyName: string;
+    manufacturer: string;
+    manufacturerURL: string;
+    modelDescription: string;
+    modelName: string;
+    modelURL: string;
+    modelNumber: string;
+    serialNumber: string;
+    services: ServiceJSON[];
+    baseURL: string;
+    host: string;
+    port: string;
+};
 
 export class Device {
     private removeDelay: any;
@@ -110,7 +130,7 @@ export class Device {
         }
     } */
 
-    toJSON() {
+    toJSON(): DeviceJSON {
         return {
             USN: this.USN,
             headers: this.headers,
@@ -188,8 +208,9 @@ export class Device {
                 const LI = Array.from(doc.getElementsByTagName("icon"));
                 this.iconList = LI.map(I => ({
                     mimetype: (node = I.getElementsByTagName("mimetype")[0]) ? node.textContent : "",
-                    width: (node = I.getElementsByTagName("mimetype")[0]) ? parseInt(node.textContent) : -1,
-                    height: (node = I.getElementsByTagName("mimetype")[0]) ? parseInt(node.textContent) : -1,
+                    width: (node = I.getElementsByTagName("width")[0]) ? parseInt(node.textContent) : -1,
+                    height: (node = I.getElementsByTagName("height")[0]) ? parseInt(node.textContent) : -1,
+                    depth: (node = I.getElementsByTagName("depth")[0]) ? parseInt(node.textContent) : -1,
                     url: (node = I.getElementsByTagName("url")[0]) ? node.textContent : ""
                 }));
                 // Get Services

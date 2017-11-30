@@ -1,8 +1,14 @@
-import { CALL_RESULT } from "./ServiceAction";
+import { CALL_RESULT, ActionJSON } from "./ServiceAction";
 import { Observable } from "@reactivex/rxjs/dist/package/Observable";
 export declare type CALL = {
     actionName: string;
     args: Object;
+};
+export declare type StateVariableJSON = {
+    sendEvents: boolean;
+    name: string;
+    dataType: string;
+    value: string;
 };
 export declare class StateVariable {
     private subject;
@@ -10,12 +16,7 @@ export declare class StateVariable {
     private name;
     private dataType;
     constructor(SV_XML: Element);
-    toJSON(): {
-        sendEvents: boolean;
-        name: string;
-        dataType: string;
-        value: string;
-    };
+    toJSON(): StateVariableJSON;
     updateValue(value: string): void;
     getName(): string;
     getDataType(): string;
@@ -25,6 +26,18 @@ export declare class StateVariable {
 export declare type ServiceConfig = {
     baseURL: string;
     serviceXML: Element;
+    host: string;
+    port: string;
+};
+export declare type ServiceJSON = {
+    serviceType: string;
+    serviceId: string;
+    SCPDURL: string;
+    controlURL: string;
+    eventSubURL: string;
+    stateVariables: StateVariableJSON[];
+    actions: ActionJSON[];
+    baseURL: string;
     host: string;
     port: string;
 };
@@ -45,34 +58,7 @@ export declare class Service {
     private eventsObs;
     constructor({baseURL, serviceXML, host, port}: ServiceConfig);
     dispose(): void;
-    toJSON(): {
-        serviceType: string;
-        serviceId: string;
-        SCPDURL: string;
-        controlURL: string;
-        eventSubURL: string;
-        stateVariables: {
-            sendEvents: boolean;
-            name: string;
-            dataType: string;
-            value: string;
-        }[];
-        actions: {
-            name: string;
-            serviceType: string;
-            controlURL: string;
-            args: {
-                name: string;
-                direction: "in" | "out";
-                relatedStateVariable: string;
-            }[];
-            host: string;
-            port: string;
-        }[];
-        baseURL: string;
-        host: string;
-        port: string;
-    };
+    toJSON(): ServiceJSON;
     call(C: CALL): Promise<CALL_RESULT>;
     getId(): string;
     getType(): string;

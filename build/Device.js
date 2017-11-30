@@ -125,8 +125,9 @@ class Device {
                 const LI = Array.from(doc.getElementsByTagName("icon"));
                 this.iconList = LI.map(I => ({
                     mimetype: (node = I.getElementsByTagName("mimetype")[0]) ? node.textContent : "",
-                    width: (node = I.getElementsByTagName("mimetype")[0]) ? parseInt(node.textContent) : -1,
-                    height: (node = I.getElementsByTagName("mimetype")[0]) ? parseInt(node.textContent) : -1,
+                    width: (node = I.getElementsByTagName("width")[0]) ? parseInt(node.textContent) : -1,
+                    height: (node = I.getElementsByTagName("height")[0]) ? parseInt(node.textContent) : -1,
+                    depth: (node = I.getElementsByTagName("depth")[0]) ? parseInt(node.textContent) : -1,
                     url: (node = I.getElementsByTagName("url")[0]) ? node.textContent : ""
                 }));
                 // Get Services

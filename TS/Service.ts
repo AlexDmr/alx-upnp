@@ -1,7 +1,7 @@
 import {get} from "request-promise-native";
 import {TLS_SSL} from "./TLS_SSL";
 import * as xmldom from "xmldom";
-import {Action, CALL_RESULT} from "./ServiceAction";
+import {Action, CALL_RESULT, ActionJSON} from "./ServiceAction";
 import {SubscribeToEvent, SubscriptionEvent, UnSubscribeFromEvent} from "./EventHandler";
 import {getRelativeAdress, SubscribeToService, UPNP_SUBSCRIBE} from "./ServiceSubscription";
 
@@ -19,6 +19,13 @@ export type CALL = {
     args: Object
 }
 
+export type StateVariableJSON = {
+    sendEvents: boolean;
+    name: string;
+    dataType: string;
+    value: string;
+}
+
 export class StateVariable {
     private subject = new BehaviorSubject<string>("");
     private sendEvents: boolean;
@@ -31,7 +38,7 @@ export class StateVariable {
         this.sendEvents = SV_XML.getAttribute("sendEvents").toLowerCase()==="yes";
     }
 
-    toJSON() {
+    toJSON(): StateVariableJSON {
         return {
             sendEvents: this.sendEvents,
             name: this.name,
@@ -68,6 +75,19 @@ export type ServiceConfig = {
     host: string;
     port: string;
 }
+
+export type ServiceJSON = {
+    serviceType: string;
+    serviceId: string;
+    SCPDURL: string;
+    controlURL: string;
+    eventSubURL: string;
+    stateVariables: StateVariableJSON[],
+    actions: ActionJSON[];
+    baseURL: string;
+    host: string;
+    port: string;
+};
 
 export class Service {
     serviceType: string;
@@ -113,7 +133,7 @@ export class Service {
         UnSubscribeFromEvent( this.sid );
     }
 
-    toJSON() {
+    toJSON(): ServiceJSON {
         return {
             serviceType: this.serviceType,
             serviceId: this.serviceId,

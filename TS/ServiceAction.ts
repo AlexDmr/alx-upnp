@@ -5,7 +5,7 @@ import * as http from "http";
 const xmlSerializer	= new xmldom.XMLSerializer();
 const parserXML     = new xmldom.DOMParser();
 
-type ACTION_ARGUMENT = {
+export type ACTION_ARGUMENT = {
     name: string;
     direction: "in" | "out";
     relatedStateVariable: string;
@@ -23,6 +23,15 @@ export type CALL_RESULT = {
     raw: string;
     out: Object;
 }
+
+export type ActionJSON = {
+    name: string;
+    serviceType: string;
+    controlURL: string;
+    args: ACTION_ARGUMENT[];
+    host: string;
+    port: string;
+};
 
 export class Action {
     private name: string;
@@ -51,7 +60,7 @@ export class Action {
         this.doc = parserXML.parseFromString( str );
     }
 
-    toJSON() {
+    toJSON(): ActionJSON {
         return {
             name: this.name,
             serviceType: this.serviceType,

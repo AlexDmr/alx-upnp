@@ -1,7 +1,7 @@
 import { ControlPoint } from "./control-point";
-import { Service, StateVariable } from './Service';
-import { Device, CALL, ICON, SERVICE_EVENT, CB_SERVICE_EVENT } from "./Device";
-import { CALL_RESULT } from "./ServiceAction";
+import { Service, StateVariable, ServiceJSON } from './Service';
+import { Device, CALL, ICON, SERVICE_EVENT, CB_SERVICE_EVENT, DeviceJSON } from "./Device";
+import { CALL_RESULT, ActionJSON, ACTION_ARGUMENT } from "./ServiceAction";
 export declare function getControlPoint(): ControlPoint;
 export declare type Service = Service;
 export declare type Device = Device;
@@ -11,3 +11,7 @@ export declare type ICON = ICON;
 export declare type SERVICE_EVENT = SERVICE_EVENT;
 export declare type CB_SERVICE_EVENT = CB_SERVICE_EVENT;
 export declare type CALL_RESULT = CALL_RESULT;
+export declare type ActionJSON = ActionJSON;
+export declare type ACTION_ARGUMENT = ACTION_ARGUMENT;
+export declare type ServiceJSON = ServiceJSON;
+export declare type DeviceJSON = DeviceJSON;
