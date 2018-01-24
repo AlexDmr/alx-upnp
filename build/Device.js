@@ -17,6 +17,7 @@ class Device {
     // private obsEvents: Observable<SERVICE_EVENT>;
     constructor(msg) {
         this.iconList = [];
+        this.deviceType = ""; // ex: urn:schemas-upnp-org:device:MediaServer:1
         this.services = [];
         logFunction_1.log("createDevice", msg);
         this.headers = msg.headers;
@@ -36,6 +37,7 @@ class Device {
             clearTimeout(this.removeDelay);
         }
         this.services.forEach(S => S.dispose());
+        subjectDeviceDisappears.next(this);
     }
     findServiceFromType(type) {
         return this.services.find(S => S.serviceType.indexOf(type) >= 0);
@@ -142,30 +144,12 @@ class Device {
                     return service.getDescription();
                 })).then(services => {
                     this.services = services;
-                    // Subscribe...
-                    /* this.obsEvents = Observable.merge( // Merge observable<SERVICE_EVENT> into one source
-                        ...this.services.map( // map services to an array of {serviceId, observableProperties}
-                            S => ({serviceId: S.serviceId, variables: S.stateVariables})
-                        ).map( // map to an array of observable<SERVICE_EVENT>
-                            ({serviceId, variables}) => obs.map(evtObj => ({serviceId, properties: evtObj}) )
-                        )
-                    );
-                    this.L_EventObservers.forEach( obs => this.obsEvents.subscribe(obs) );
-                    this.L_EventObservers = [];
-                    return this;*/
-                }, err => {
-                    logFunction_1.logError("Error getting all services descriptions", err);
+                    return this;
                 });
             }
             else {
                 throw "Device document cannot be parsed or is empty";
             }
-        }, err => {
-            logFunction_1.logError("Error getting details from", location, "\n", err.message);
-            return err;
-        }).catch(err => {
-            logFunction_1.logError("Error getting details from", location, "\n", err.message);
-            return err;
         });
     }
 }
@@ -191,13 +175,14 @@ function createDevice(msg) {
 exports.createDevice = createDevice;
 function removeDevice(msg) {
     if (mapDevices.has(msg.headers.USN)) {
+        logFunction_1.log("removeDevice", msg.headers.USN, mapDevices.has(msg.headers.USN));
         removeDeviceWithRef(mapDevices.get(msg.headers.USN));
     }
 }
 exports.removeDevice = removeDevice;
 function removeDeviceWithRef(device) {
     if (device && device.getUSN() && mapDevices.has(device.getUSN())) {
-        logFunction_1.log("removeDeviceWithRef", device);
+        logFunction_1.log("removeDeviceWithRef", device.getUSN());
         device.dispose();
     }
 }

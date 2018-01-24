@@ -4,6 +4,7 @@ const SSDP_1 = require("./SSDP");
 const dgram_1 = require("dgram");
 const netInterfaces_1 = require("./netInterfaces");
 const Device_1 = require("./Device");
+const logFunction_1 = require("./logFunction");
 const RE_CacheControl = /= *([0-9]*)$/;
 class ControlPoint {
     constructor() {
@@ -57,6 +58,7 @@ class ControlPoint {
                         Device_1.updateDevice(res);
                         break;
                     case "ssdp:byebye":
+                        logFunction_1.log("ssdp:byebye", res);
                         Device_1.removeDevice(res);
                         break;
                 }

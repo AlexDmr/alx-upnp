@@ -87,3 +87,6 @@ CP.subscribeToDeviceAppear( (device: Device) => {
 });
 
 
+CP.getObsDeviceDisappears().forEach( (device: Device) => {
+    console.log("---!!!-----> device disappear", device.getUSN());
+});

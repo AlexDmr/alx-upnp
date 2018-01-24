@@ -95,7 +95,10 @@ export function UnSubscribeFromEvent(sid: string) {
         clearTimeout(subscription.timer);
         mapSubscription.delete(sid);
         const {host, port, path} = subscription.upnpSubscr;
-        UnSubscribeFromService(sid, host, port, path);
+        UnSubscribeFromService(sid, host, port, path).then(
+            () => log(`UnSubscribeFromEvent ${sid} done`),
+            err => logError(`ERROR UnSubscribeFromEvent ${sid}`, err)
+        );
     }
 }
 

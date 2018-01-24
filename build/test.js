@@ -64,4 +64,7 @@ CP.subscribeToDeviceAppear((device) => {
         });
     });
 });
+CP.getObsDeviceDisappears().forEach((device) => {
+    console.log("---!!!-----> device disappear", device.getUSN());
+});
 //# sourceMappingURL=test.js.map

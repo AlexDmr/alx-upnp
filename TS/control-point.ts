@@ -5,6 +5,7 @@ import {createDevice, Device, getDevices, obsDeviceAppears, obsDeviceDisppears, 
 import {NetworkInterfaceInfo} from "os";
 import {Observer, Subscription} from "@reactivex/rxjs";
 import { Observable } from '@reactivex/rxjs/dist/package';
+import {log} from "./logFunction";
 
 const RE_CacheControl = /= *([0-9]*)$/;
 
@@ -71,6 +72,7 @@ export class ControlPoint {
                         updateDevice(res);
                         break;
                     case "ssdp:byebye":
+                        log("ssdp:byebye", res);
                         removeDevice(res);
                         break;
                 }

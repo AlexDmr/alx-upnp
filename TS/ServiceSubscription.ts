@@ -142,7 +142,7 @@ export async function UnSubscribeFromService(sid, host, port, eventSubUrl) {
             res.on('end', () => {
                 if (res.statusCode !== 200) {
                     const msg = `HTTP CODE !== 200 : ${res.statusCode}`;
-                    console.error( msg );
+                    logError( msg );
                     reject( msg );
                 } else {
                     resolve();
@@ -151,7 +151,7 @@ export async function UnSubscribeFromService(sid, host, port, eventSubUrl) {
         });
         req.on('error', function (e) {
             const msg = `problem with unsubscribe: ${e.message}`;
-            console.error( msg );
+            logError( msg );
             reject(msg);
         });
         req.end("");

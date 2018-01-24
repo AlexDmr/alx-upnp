@@ -64,7 +64,7 @@ export class Device {
     private USN: string;
     private headers: SSDP_HEADER;
     private iconList: ICON[] = [];
-    private deviceType: string; // ex: urn:schemas-upnp-org:device:MediaServer:1
+    private deviceType: string = ""; // ex: urn:schemas-upnp-org:device:MediaServer:1
     private friendlyName: string;
     private manufacturer: string;
     private manufacturerURL: string;
@@ -104,6 +104,7 @@ export class Device {
             clearTimeout(this.removeDelay);
         }
         this.services.forEach( S => S.dispose() );
+        subjectDeviceDisappears.next(this);
     }
 
     findServiceFromType(type: string): Service {
@@ -228,31 +229,12 @@ export class Device {
                 ).then(
                     services => {
                         this.services = services;
-                        // Subscribe...
-                        /* this.obsEvents = Observable.merge( // Merge observable<SERVICE_EVENT> into one source
-                            ...this.services.map( // map services to an array of {serviceId, observableProperties}
-                                S => ({serviceId: S.serviceId, variables: S.stateVariables})
-                            ).map( // map to an array of observable<SERVICE_EVENT>
-                                ({serviceId, variables}) => obs.map(evtObj => ({serviceId, properties: evtObj}) )
-                            )
-                        );
-                        this.L_EventObservers.forEach( obs => this.obsEvents.subscribe(obs) );
-                        this.L_EventObservers = [];
-                        return this;*/
-                    },
-                    err => {
-                        logError("Error getting all services descriptions", err);
+                        return this;
                     }
                 );
             } else {
                 throw "Device document cannot be parsed or is empty";
             }
-        }, err => {
-            logError("Error getting details from", location, "\n", err.message);
-            return err;
-        }).catch(err => {
-            logError("Error getting details from", location, "\n", err.message);
-            return err;
         });
     }
 }
@@ -280,13 +262,14 @@ export function createDevice(msg: SSDP_MESSAGE) {
 
 export function removeDevice(msg: SSDP_MESSAGE) {
     if(mapDevices.has(msg.headers.USN)) {
+        log("removeDevice", msg.headers.USN, mapDevices.has(msg.headers.USN));
         removeDeviceWithRef( mapDevices.get(msg.headers.USN) );
     }
 }
 
 function removeDeviceWithRef(device: Device) {
     if (device && device.getUSN() && mapDevices.has(device.getUSN())) {
-        log("removeDeviceWithRef", device);
+        log("removeDeviceWithRef", device.getUSN());
         device.dispose();
     }
 }
